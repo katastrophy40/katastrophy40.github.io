@@ -184,19 +184,22 @@
     box-shadow: 0 -2px 10px #000;
   }
 
-  #devIcon {
+  /* KDE STYLE ICONS (default) */
+  .taskIcon {
     background:#1c1c1c;
     border:2px solid #d10000;
     padding:6px 14px;
     cursor:pointer;
     color:#ccc;
     margin-left:10px;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 15px;
+    transition: 0.2s;
   }
 
-  #devIcon:hover {
+  .taskIcon:hover {
     background:#2a2a2a;
+    box-shadow: 0 0 10px #d10000;
   }
 
   #clock {
@@ -238,6 +241,43 @@
   .dev-toggle:hover {
     background: #333;
   }
+
+  /* OPTIONS APP */
+  #optionsPanel {
+    position: absolute;
+    top: 80px;
+    left: 80px;
+    width: 300px;
+    height: 350px;
+    background: #1a1a1a;
+    border: 2px solid #d10000;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #000;
+    display: none;
+    flex-direction: column;
+  }
+
+  #optionsPanel h2 {
+    margin: 0;
+    padding: 12px;
+    background: #222;
+    color: #d10000;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .optBtn {
+    margin: 10px;
+    padding: 10px;
+    background: #222;
+    border: 1px solid #d10000;
+    color: #ccc;
+    cursor: pointer;
+    border-radius: 10px;
+  }
+
+  .optBtn:hover {
+    background: #333;
+  }
 </style>
 
 <script>
@@ -247,13 +287,11 @@
   /* BOOT + PIN FLASH */
   window.onload = () => {
 
-    // Flash PIN pad open for 150ms
     document.getElementById("pinPad").style.display = "block";
     setTimeout(() => {
       document.getElementById("pinPad").style.display = "none";
     }, 150);
 
-    // Finish boot
     setTimeout(() => {
       document.getElementById("bootScreen").style.display = "none";
       document.getElementById("desktop").style.display = "block";
@@ -264,12 +302,10 @@
     }, 1000);
   };
 
-  /* DEV ICON OPENS PIN PAD */
   function openDevPad() {
     document.getElementById("pinPad").style.display = "block";
   }
 
-  /* DEV MODE PIN PAD */
   function enableDev() {
     document.getElementById("pinPad").style.display = "block";
   }
@@ -295,7 +331,6 @@
     }
   }
 
-  /* CLOCK */
   function updateClock() {
     const now = new Date();
     document.getElementById("clock").innerText =
@@ -304,7 +339,6 @@
   setInterval(updateClock, 1000);
   updateClock();
 
-  /* OPEN WINDOW */
   function openWindow(appName, filePath) {
     const win = document.getElementById("mainWindow");
     win.style.display = "flex";
@@ -314,6 +348,40 @@
 
   function closeWindow() {
     document.getElementById("mainWindow").style.display = "none";
+  }
+
+  /* OPTIONS APP */
+  function openOptions() {
+    document.getElementById("optionsPanel").style.display = "flex";
+  }
+
+  function closeOptions() {
+    document.getElementById("optionsPanel").style.display = "none";
+  }
+
+  /* APPLY KDE STYLES */
+  function applyStyle(style) {
+    const icons = document.querySelectorAll(".taskIcon");
+
+    icons.forEach(icon => {
+      if (style === "breeze") {
+        icon.style.borderRadius = "12px";
+        icon.style.boxShadow = "none";
+      }
+      if (style === "neon") {
+        icon.style.borderRadius = "14px";
+        icon.style.boxShadow = "0 0 12px #d10000";
+      }
+      if (style === "flat") {
+        icon.style.borderRadius = "6px";
+        icon.style.boxShadow = "none";
+      }
+      if (style === "glass") {
+        icon.style.borderRadius = "12px";
+        icon.style.backdropFilter = "blur(6px)";
+        icon.style.background = "rgba(30,30,30,0.6)";
+      }
+    });
   }
 
   /* AUTO-LOAD PLAYABLES */
@@ -330,7 +398,6 @@
         files.forEach((file, i) => {
           const name = file.replace(".html", "");
 
-          /* ICON */
           const icon = document.createElement("div");
           icon.className = "app-icon";
           icon.style.left = (20 + i * 90) + "px";
@@ -341,7 +408,6 @@
           `;
           icon.onclick = () => openWindow(name, "Playable/" + file);
 
-          /* DRAGGABLE ICON */
           icon.onmousedown = function(e) {
             let shiftX = e.clientX - icon.getBoundingClientRect().left;
             let shiftY = e.clientY - icon.getBoundingClientRect().top;
@@ -366,7 +432,6 @@
       });
   });
 
-  /* DRAGGABLE WINDOW */
   let isDragging = false;
   let offsetX, offsetY;
 
@@ -430,9 +495,17 @@
   <!-- DEV PANEL -->
   <div id="devPanel">
     <h3>Dev Controls</h3>
-    <div class="dev-toggle">Toggle Experimental UI</div>
-    <div class="dev-toggle">Enable Debug Overlay</div>
-    <div class="dev-toggle">Force Reload Apps</div>
+    <div class="dev-toggle" onclick="openOptions()">Open Options</div>
+  </div>
+
+  <!-- OPTIONS PANEL -->
+  <div id="optionsPanel">
+    <h2>Taskbar Style</h2>
+    <div class="optBtn" onclick="applyStyle('breeze')">KDE Breeze Dark</div>
+    <div class="optBtn" onclick="applyStyle('neon')">KDE Neon Red</div>
+    <div class="optBtn" onclick="applyStyle('flat')">KDE Flat Minimal</div>
+    <div class="optBtn" onclick="applyStyle('glass')">KDE Glass</div>
+    <div class="optBtn" onclick="closeOptions()">Close</div>
   </div>
 
   <!-- WINDOW -->
@@ -448,7 +521,8 @@
 
   <!-- TASKBAR -->
   <div id="taskbar">
-    <div id="devIcon" onclick="openDevPad()">DEV</div>
+    <div class="taskIcon" onclick="openDevPad()">DEV</div>
+    <div class="taskIcon" onclick="openOptions()">OPTIONS</div>
     <div id="clock"></div>
   </div>
 
