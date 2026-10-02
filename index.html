@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GaimOS — katastrophy edition</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #0a0a0a;
+    font-family: Segoe UI, Arial, sans-serif;
+    overflow: hidden;
+    color: #ddd;
+  }
+
+  /* BOOT SCREEN */
+  #bootScreen {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 9999;
+  }
+
+  #bootLogo {
+    font-size: 55px;
+    color: #d10000;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 20px 40px;
+  }
+
+  #devBtn {
+    margin-top: 25px;
+    padding: 10px 22px;
+    background: #1c1c1c;
+    border: 2px solid #d10000;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  #devBtn:hover {
+    background: #2a2a2a;
+  }
+
+  /* PIN PAD */
+  #pinPad {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1a1a1a;
+    border: 2px solid #d10000;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 25px #000;
+    border-radius: 12px;
+    z-index: 99999;
+  }
+
+  #pinDisplay {
+    width: 160px;
+    height: 45px;
+    background: #111;
+    border: 1px solid #333;
+    color: #ccc;
+    margin: 10px auto;
+    font-size: 22px;
+    text-align: center;
+    line-height: 45px;
+    border-radius: 8px;
+  }
+
+  .pinBtn {
+    width: 55px;
+    height: 55px;
+    background: #222;
+    border: 1px solid #d10000;
+    color: #ccc;
+    font-size: 20px;
+    margin: 5px;
+    cursor: pointer;
+    display: inline-block;
+    line-height: 55px;
+    border-radius: 10px;
+  }
+
+  .pinBtn:hover {
+    background: #333;
+  }
+
+  /* DESKTOP */
+  #desktop {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    background: #0f0f0f;
+    position: relative;
+  }
+
+  /* DESKTOP ICONS */
+  .app-icon {
+    width: 70px;
+    text-align: center;
+    cursor: pointer;
+    position: absolute;
+    color: #ddd;
+    font-size: 14px;
+  }
+
+  .app-box {
+    width: 50px;
+    height: 50px;
+    background: #1c1c1c;
+    border: 2px solid #d10000;
+    margin: 0 auto 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #d10000;
+    font-weight: bold;
+    font-size: 22px;
+    border-radius: 12px;
+    box-shadow: 0 0 8px #000;
+  }
+
+  /* WINDOW */
+  .window {
+    position: absolute;
+    width: 650px;
+    height: 450px;
+    background: #1a1a1a;
+    border: 2px solid #d10000;
+    box-shadow: 0 0 20px #000;
+    display: none;
+    flex-direction: column;
+    resize: both;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+
+  .window-header {
+    background: #222;
+    padding: 10px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    cursor: move;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .close-btn {
+    background: #d10000;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-radius: 8px;
+  }
+
+  .window-body {
+    flex: 1;
+    background: #111;
+    border-radius: 0 0 10px 10px;
+  }
+
+  /* TASKBAR */
+  #taskbar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 45px;
+    width: 100%;
+    background: #111;
+    border-top: 2px solid #d10000;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    box-shadow: 0 -2px 10px #000;
+  }
+
+  /* KDE STYLE ICONS (default) */
+  .taskIcon {
+    background:#1c1c1c;
+    border:2px solid #d10000;
+    padding:6px 14px;
+    cursor:pointer;
+    color:#ccc;
+    margin-left:10px;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: 0.2s;
+  }
+
+  .taskIcon:hover {
+    background:#2a2a2a;
+    box-shadow: 0 0 10px #d10000;
+  }
+
+  #clock {
+    margin-left: auto;
+    margin-right: 15px;
+    font-size: 15px;
+    color: #ccc;
+  }
+
+  /* DEV PANEL */
+  #devPanel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 260px;
+    background: #1a1a1a;
+    border: 2px solid #d10000;
+    padding: 12px;
+    display: none;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #000;
+  }
+
+  #devPanel h3 {
+    margin-top: 0;
+    color: #d10000;
+    font-size: 18px;
+  }
+
+  .dev-toggle {
+    margin: 10px 0;
+    padding: 10px;
+    background: #222;
+    border: 1px solid #d10000;
+    cursor: pointer;
+    border-radius: 10px;
+  }
+
+  .dev-toggle:hover {
+    background: #333;
+  }
+
+  /* OPTIONS APP */
+  #optionsPanel {
+    position: absolute;
+    top: 80px;
+    left: 80px;
+    width: 300px;
+    height: 350px;
+    background: #1a1a1a;
+    border: 2px solid #d10000;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #000;
+    display: none;
+    flex-direction: column;
+  }
+
+  #optionsPanel h2 {
+    margin: 0;
+    padding: 12px;
+    background: #222;
+    color: #d10000;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .optBtn {
+    margin: 10px;
+    padding: 10px;
+    background: #222;
+    border: 1px solid #d10000;
+    color: #ccc;
+    cursor: pointer;
+    border-radius: 10px;
+  }
+
+  .optBtn:hover {
+    background: #333;
+  }
+</style>
+
+<script>
+  let devMode = false;
+  let pinInput = "";
+
+  /* BOOT + PIN FLASH */
+  window.onload = () => {
+
+    document.getElementById("pinPad").style.display = "block";
+    setTimeout(() => {
+      document.getElementById("pinPad").style.display = "none";
+    }, 150);
+
+    setTimeout(() => {
+      document.getElementById("bootScreen").style.display = "none";
+      document.getElementById("desktop").style.display = "block";
+
+      if (devMode) {
+        document.getElementById("devPanel").style.display = "block";
+      }
+    }, 1000);
+  };
+
+  function openDevPad() {
+    document.getElementById("pinPad").style.display = "block";
+  }
+
+  function enableDev() {
+    document.getElementById("pinPad").style.display = "block";
+  }
+
+  function pressNum(n) {
+    if (pinInput.length < 4) {
+      pinInput += n;
+      document.getElementById("pinDisplay").innerText = pinInput;
+    }
+
+    if (pinInput.length === 4) {
+      if (pinInput === "8692") {
+        devMode = true;
+        document.getElementById("pinPad").style.display = "none";
+        document.getElementById("devPanel").style.display = "block";
+      } else {
+        pinInput = "";
+        document.getElementById("pinDisplay").innerText = "WRONG";
+        setTimeout(() => {
+          document.getElementById("pinDisplay").innerText = "";
+        }, 800);
+      }
+    }
+  }
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById("clock").innerText =
+      now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  function openWindow(appName, filePath) {
+    const win = document.getElementById("mainWindow");
+    win.style.display = "flex";
+    document.getElementById("windowTitle").innerText = appName;
+    document.getElementById("windowFrame").src = filePath;
+  }
+
+  function closeWindow() {
+    document.getElementById("mainWindow").style.display = "none";
+  }
+
+  /* OPTIONS APP */
+  function openOptions() {
+    document.getElementById("optionsPanel").style.display = "flex";
+  }
+
+  function closeOptions() {
+    document.getElementById("optionsPanel").style.display = "none";
+  }
+
+  /* APPLY KDE STYLES */
+  function applyStyle(style) {
+    const icons = document.querySelectorAll(".taskIcon");
+
+    icons.forEach(icon => {
+      if (style === "breeze") {
+        icon.style.borderRadius = "12px";
+        icon.style.boxShadow = "none";
+      }
+      if (style === "neon") {
+        icon.style.borderRadius = "14px";
+        icon.style.boxShadow = "0 0 12px #d10000";
+      }
+      if (style === "flat") {
+        icon.style.borderRadius = "6px";
+        icon.style.boxShadow = "none";
+      }
+      if (style === "glass") {
+        icon.style.borderRadius = "12px";
+        icon.style.backdropFilter = "blur(6px)";
+        icon.style.background = "rgba(30,30,30,0.6)";
+      }
+    });
+  }
+
+  /* AUTO-LOAD PLAYABLES */
+  window.addEventListener("DOMContentLoaded", () => {
+    const desktop = document.getElementById("desktop");
+
+    fetch("Playable/")
+      .then(r => r.text())
+      .then(text => {
+        const files = [...text.matchAll(/href="([^"]+)"/g)]
+          .map(m => m[1])
+          .filter(f => f.endsWith(".html"));
+
+        files.forEach((file, i) => {
+          const name = file.replace(".html", "");
+
+          const icon = document.createElement("div");
+          icon.className = "app-icon";
+          icon.style.left = (20 + i * 90) + "px";
+          icon.style.top = "20px";
+          icon.innerHTML = `
+            <div class="app-box">${name[0].toUpperCase()}</div>
+            <span>${name}</span>
+          `;
+          icon.onclick = () => openWindow(name, "Playable/" + file);
+
+          icon.onmousedown = function(e) {
+            let shiftX = e.clientX - icon.getBoundingClientRect().left;
+            let shiftY = e.clientY - icon.getBoundingClientRect().top;
+
+            function moveAt(pageX, pageY) {
+              icon.style.left = pageX - shiftX + "px";
+              icon.style.top = pageY - shiftY + "px";
+            }
+
+            function onMouseMove(e) {
+              moveAt(e.pageX, e.pageY);
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            icon.onmouseup = () => {
+              document.removeEventListener('mousemove', onMouseMove);
+            };
+          };
+
+          desktop.appendChild(icon);
+        });
+      });
+  });
+
+  let isDragging = false;
+  let offsetX, offsetY;
+
+  function startDrag(e) {
+    const win = document.getElementById("mainWindow");
+    isDragging = true;
+    offsetX = e.clientX - win.offsetLeft;
+    offsetY = e.clientY - win.offsetTop;
+  }
+
+  function drag(e) {
+    if (!isDragging) return;
+    const win = document.getElementById("mainWindow");
+    win.style.left = (e.clientX - offsetX) + "px";
+    win.style.top = (e.clientY - offsetY) + "px";
+  }
+
+  function stopDrag() {
+    isDragging = false;
+  }
+
+  document.addEventListener("mousemove", drag);
+  document.addEventListener("mouseup", stopDrag);
+</script>
+
+</head>
+<body>
+
+<!-- BOOT -->
+<div id="bootScreen">
+  <div id="bootLogo">katastrophy</div>
+  <div id="devBtn" onclick="enableDev()">DEV MODE</div>
+</div>
+
+<!-- PIN PAD -->
+<div id="pinPad">
+  <div id="pinDisplay"></div>
+  <div>
+    <div class="pinBtn" onclick="pressNum('1')">1</div>
+    <div class="pinBtn" onclick="pressNum('2')">2</div>
+    <div class="pinBtn" onclick="pressNum('3')">3</div>
+  </div>
+  <div>
+    <div class="pinBtn" onclick="pressNum('4')">4</div>
+    <div class="pinBtn" onclick="pressNum('5')">5</div>
+    <div class="pinBtn" onclick="pressNum('6')">6</div>
+  </div>
+  <div>
+    <div class="pinBtn" onclick="pressNum('7')">7</div>
+    <div class="pinBtn" onclick="pressNum('8')">8</div>
+    <div class="pinBtn" onclick="pressNum('9')">9</div>
+  </div>
+  <div>
+    <div class="pinBtn" onclick="pressNum('0')">0</div>
+  </div>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop">
+
+  <!-- DEV PANEL -->
+  <div id="devPanel">
+    <h3>Dev Controls</h3>
+    <div class="dev-toggle" onclick="openOptions()">Open Options</div>
+  </div>
+
+  <!-- OPTIONS PANEL -->
+  <div id="optionsPanel">
+    <h2>Taskbar Style</h2>
+    <div class="optBtn" onclick="applyStyle('breeze')">KDE Breeze Dark</div>
+    <div class="optBtn" onclick="applyStyle('neon')">KDE Neon Red</div>
+    <div class="optBtn" onclick="applyStyle('flat')">KDE Flat Minimal</div>
+    <div class="optBtn" onclick="applyStyle('glass')">KDE Glass</div>
+    <div class="optBtn" onclick="closeOptions()">Close</div>
+  </div>
+
+  <!-- WINDOW -->
+  <div id="mainWindow" class="window">
+    <div class="window-header" onmousedown="startDrag(event)">
+      <span id="windowTitle">App</span>
+      <div class="close-btn" onclick="closeWindow()">X</div>
+    </div>
+    <div class="window-body">
+      <iframe id="windowFrame" style="width:100%;height:100%;border:none;"></iframe>
+    </div>
+  </div>
+
+  <!-- TASKBAR -->
+  <div id="taskbar">
+    <div class="taskIcon" onclick="openDevPad()">DEV</div>
+    <div class="taskIcon" onclick="openOptions()">OPTIONS</div>
+    <div id="clock"></div>
+  </div>
+
+</div>
+
+</body>
+</html>
