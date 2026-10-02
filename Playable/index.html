@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Games</title>
+<style>
+:root{--bg:#3e4852;--bg2:#272e35;--win:#e4e7ea;--wtext:#1d2227;--bar:#20272d;--barText:#dfe4e8;--accent:#c8372d;--accentText:#fff;--tile:#2b333a;--size:64px;--round:6px;--font:Bahnschrift,"DIN Alternate","Roboto Condensed","Segoe UI",Arial,sans-serif;--tb:40px;
+box-sizing:border-box}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--bg);font-family:var(--font);color:#fff;user-select:none;-webkit-user-select:none}
+#bg{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:inherit;cursor:pointer}
+/* desktop icons */
+#desk{position:fixed;top:0;left:0;right:0;bottom:calc(var(--tb) + env(safe-area-inset-bottom,0px));padding:calc(18px + env(safe-area-inset-top,0px)) 14px 14px;display:grid;grid-auto-flow:column;grid-template-rows:repeat(auto-fill,calc(var(--size) + 46px));grid-auto-columns:calc(var(--size) + 34px);align-content:start;justify-content:start;gap:6px}
+.ic{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:2px solid transparent;border-radius:var(--round);color:#fff;padding:6px 2px;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.ic:hover{background:rgba(255,255,255,.14)}
+.ic .t{width:var(--size);height:var(--size);border-radius:calc(var(--round)*1.2);display:flex;align-items:center;justify-content:center;font-size:calc(var(--size)*.46);font-weight:800;text-shadow:none;box-shadow:0 4px 10px rgba(0,0,0,.35);overflow:hidden}
+.ic .t img{width:100%;height:100%;object-fit:cover}
+.ic .n{font-size:13px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
+/* windows */
+.win{position:fixed;display:flex;flex-direction:column;background:var(--win);color:var(--wtext);border-radius:var(--round);box-shadow:0 14px 40px rgba(0,0,0,.5);overflow:hidden;resize:both;min-width:240px;min-height:150px;user-select:text}
+.win.max{inset:0 0 calc(var(--tb) + env(safe-area-inset-bottom,0px)) 0!important;width:auto!important;height:auto!important;border-radius:0;resize:none}
+.win.hid{display:none}
+.bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bar);color:var(--barText);cursor:grab;user-select:none;touch-action:none;font-weight:600;font-size:14px}
+.bar .ttl{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb{width:30px;height:22px;border:0;border-radius:2px;background:transparent;color:inherit;font-size:15px;line-height:1;padding:0}
+.wb:hover{background:rgba(255,255,255,.18)}
+.wb.c:hover{background:#b33a3a;color:#fff}
+.wbody{flex:1;position:relative;overflow:auto;min-height:0}
+.wbody iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
+body.drag iframe{pointer-events:none}
+.pad{padding:16px 18px}
+/* taskbar */
+#taskbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tb) + env(safe-area-inset-bottom,0px));padding:0 10px env(safe-area-inset-bottom,0px);display:flex;align-items:center;gap:8px;background:var(--bar);color:var(--barText);border-top:1px solid rgba(255,255,255,.12);z-index:9000}
+#start{background:var(--accent);color:var(--accentText);border:0;border-radius:var(--round);padding:9px 20px;font-weight:700}
+#tasks{flex:1;display:flex;gap:6px;overflow-x:auto;min-width:0}
+.task{background:rgba(255,255,255,.1);color:inherit;border:0;border-radius:var(--round);padding:8px 16px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.task.on{background:rgba(255,255,255,.28)}
+#off{font-size:12px;opacity:.8;white-space:nowrap}
+#clock{font-size:14px;padding:0 8px;font-variant-numeric:tabular-nums}
+#menu{position:fixed;left:12px;bottom:calc(var(--tb) + env(safe-area-inset-bottom,0px));width:min(300px,calc(100% - 24px));max-height:60vh;display:flex;flex-direction:column;background:var(--win);color:var(--wtext);border-radius:var(--round) var(--round) 0 0;box-shadow:0 -4px 20px rgba(0,0,0,.4);padding:12px;z-index:9001}
+#menu[hidden]{display:none}
+#q{width:100%;padding:10px 16px;font:inherit;border:2px solid rgba(0,0,0,.15);border-radius:var(--round);background:#fff;color:#222;margin-bottom:8px;user-select:text}
+#mlist{overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.mi{display:flex;align-items:center;gap:10px;background:none;border:0;color:inherit;padding:8px 10px;border-radius:calc(var(--round)*.7);text-align:left}
+.mi:hover{background:rgba(0,0,0,.08)}
+.mi i{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px}
+/* settings controls */
+.row{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;font-size:14px;font-weight:600}
+.row .top{display:flex;justify-content:space-between;opacity:.7}
+.row select{font:inherit;padding:8px 12px;border-radius:var(--round);border:2px solid rgba(0,0,0,.15);background:#fff;color:#222}
+.row input[type=range]{width:100%;accent-color:var(--bar)}
+.row.chk{flex-direction:row;align-items:center;gap:10px}
+.row.chk input{width:18px;height:18px;accent-color:var(--bar)}
+.btn{background:var(--bar);color:var(--barText);border:0;border-radius:var(--round);padding:9px 18px;font-weight:600}
+#pin{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9500}
+#pin[hidden]{display:none}
+.pbox{background:var(--win);color:var(--wtext);border-radius:calc(var(--round) + 8px);padding:22px;width:min(280px,calc(100% - 32px));text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.pbox p{margin:0;font-weight:600;min-height:1.3em}
+.dots{display:flex;gap:12px;justify-content:center;margin:12px 0 16px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--bar)}
+.dots i.f{background:var(--bar)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.keys button{padding:14px 0;border-radius:var(--round);border:0;background:rgba(128,128,128,.2);color:inherit;font-size:18px;font-weight:600}
+.keys button:hover{background:rgba(128,128,128,.35)}
+.shake{animation:sh .3s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.win{border:1px solid rgba(0,0,0,.4)}
+/* plain taskbar */
+#taskbar{align-items:stretch;gap:0;padding:0 0 env(safe-area-inset-bottom,0px);border-top:1px solid rgba(255,255,255,.1)}
+#start{background:transparent;color:var(--barText);border:0;border-right:1px solid rgba(255,255,255,.12);border-radius:0;padding:0 18px;font-weight:600}
+#start:hover,.task:hover{background:rgba(255,255,255,.07)}
+#tasks{gap:0}
+.task{background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;padding:0 16px;max-width:180px}
+.task.on{background:rgba(255,255,255,.08);border-bottom-color:rgba(255,255,255,.45)}
+#off,#clock{align-self:center}
+#clock{padding:0 14px;opacity:.8}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="desk"></div>
+<div id="menu" hidden>
+  <input id="q" type="search" placeholder="Search games" aria-label="Search games" autocomplete="off">
+  <div id="mlist"></div>
+</div>
+<div id="taskbar">
+  <button id="start" aria-expanded="false" aria-controls="menu">Start</button>
+  <div id="tasks"></div>
+  <button id="lock" class="task" hidden>Lock</button>
+  <span id="off" aria-live="polite"></span>
+  <div id="clock"></div>
+</div>
+<script>
+/* EDIT THIS LIST. name = label, path = link relative to this file, thumb = optional icon image */
+const GAMES = [
+  { name: "Game One",   path: "games/game-one/index.html" },
+  { name: "Game Two",   path: "games/game-two/index.html" },
+  { name: "Game Three", path: "games/game-three/index.html", thumb: "" },
+];
+
+/* SECRET DESKTOP: same format as GAMES. Only shows after the PIN is entered. */
+const SECRET_GAMES = [
+  { name: "Secret One", path: "secret/one/index.html" },
+];
+let secret = false;
+const cur = () => secret ? SECRET_GAMES : GAMES;
+const PIN_HASH = "e2d5b613fb0c469dacec013794d08fcb584f06858f648de5e28c21bbce8eb695";
+
+const THEMES = {
+  steel:   {bg:"#3e4852",bg2:"#272e35",win:"#e4e7ea",wtext:"#1d2227",bar:"#20272d",barText:"#dfe4e8",accent:"#c8372d",tile:"#2b333a"},
+  concrete:{bg:"#9a9d9f",bg2:"#6f7376",win:"#eeeeed",wtext:"#202224",bar:"#3b3f43",barText:"#ececec",accent:"#b3322a",tile:"#4a4e52"},
+  olive:   {bg:"#4a4f3c",bg2:"#2d3125",win:"#e5e6df",wtext:"#20231a",bar:"#262a1f",barText:"#e0e2d6",accent:"#bf3b30",tile:"#33372a"},
+  navy:    {bg:"#2f3b4c",bg2:"#1b232f",win:"#e3e7ed",wtext:"#18202b",bar:"#161d27",barText:"#dce3ec",accent:"#6fa8d6",tile:"#232d3b"},
+  black:   {bg:"#232427",bg2:"#131416",win:"#d9dadc",wtext:"#17181a",bar:"#0e0f10",barText:"#d5d6d8",accent:"#d63c32",tile:"#1b1c1f"},
+  secret:  {bg:"#201718",bg2:"#0f0b0c",win:"#dcd6d6",wtext:"#1a1414",bar:"#0b0808",barText:"#e6dede",accent:"#c0453a",tile:"#2a1d1e"}
+};
+const FONTS = [
+  ['Bahnschrift,"DIN Alternate","Roboto Condensed","Segoe UI",Arial,sans-serif',"Industrial"],
+  ['"Segoe UI",Tahoma,Verdana,sans-serif',"Classic"],
+  ["system-ui,sans-serif","System"],
+  ["ui-monospace,Menlo,Consolas,monospace","Mono"],
+  ["Georgia,serif","Serif"]
+];
+const ICONCOL = ["#ffd166","#ef476f","#06d6a0","#4cc9f0","#b388eb","#ff9f68"];
+const DEF = {fx:"none",theme:"steel",speed:1,density:100,bright:.6,pause:false,size:64,round:6,font:FONTS[0][0],windows:true};
+const CONTROLS = [
+  ["fx","Wallpaper effect","select",[["grid","Grid"],["shapes","Floating shapes"],["flow","Flow lines"],["rain","Rain"],["snow","Snow"],["light","Soft light"],["none","None"]]],
+  ["theme","Color theme","select",[["steel","Steel"],["concrete","Concrete"],["olive","Olive"],["navy","Navy"],["black","Black"]]],
+  ["speed","Effect speed","range",.2,3,.1],
+  ["density","Effect amount","range",20,200,10],
+  ["bright","Effect strength","range",.1,1,.05],
+  ["pause","Freeze effect","check"],
+  ["size","Icon size","range",44,120,4],
+  ["round","Roundness","range",0,30,1],
+  ["font","Text font","select",FONTS],
+  ["windows","Open games in windows","check"]
+];
+
+const KEY = "gs5-settings";
+let S = {...DEF}, hadSaved = false;
+try { const j = localStorage.getItem(KEY); if (j) { hadSaved = true; Object.assign(S, JSON.parse(j)); } } catch (e) {}
+if (!hadSaved && matchMedia("(prefers-reduced-motion: reduce)").matches) S.pause = true;
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+const $ = id => document.getElementById(id);
+const ink = h => { const n = parseInt(h.slice(1), 16); return ((n >> 16) * .299 + (n >> 8 & 255) * .587 + (n & 255) * .114) > 150 ? "#1a1a1a" : "#fff"; };
+const rgba = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${a})`; };
+
+/* ---------- wallpaper effects ---------- */
+const cv = $("bg"), x = cv.getContext("2d"), rnd = Math.random;
+let W, H, T = 0, th = THEMES.teal, P = [];
+const FX = {
+  grid: {
+    init() {},
+    draw() {
+      x.clearRect(0, 0, W, H); x.strokeStyle = "rgba(255,255,255,.12)"; x.lineWidth = 1; x.beginPath();
+      const st = Math.round(70 - S.density / 4), o = (T * 8) % st;
+      for (let px = -o; px < W; px += st) { x.moveTo(px + .5, 0); x.lineTo(px + .5, H); }
+      for (let py = -o; py < H; py += st) { x.moveTo(0, py + .5); x.lineTo(W, py + .5); }
+      x.stroke();
+    }
+  },
+  shapes: {
+    init() { P = Array.from({length: Math.round(28 * S.density / 100)}, (_, i) => ({x: rnd()*W, y: rnd()*H, s: 14 + rnd()*40, r: rnd()*6.28, vr: (rnd()-.5)*.6, v: 8 + rnd()*20, t: i % 3})); },
+    draw(dt) {
+      x.clearRect(0, 0, W, H); x.lineWidth = 3; x.strokeStyle = "rgba(255,255,255,.4)";
+      P.forEach(p => {
+        p.y -= p.v * dt; p.r += p.vr * dt; if (p.y < -60) { p.y = H + 60; p.x = rnd() * W; }
+        x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.beginPath();
+        if (p.t === 0) x.arc(0, 0, p.s / 2, 0, 6.283); else if (p.t === 1) x.rect(-p.s / 2, -p.s / 2, p.s, p.s);
+        else { x.moveTo(0, -p.s / 2); x.lineTo(p.s / 2, p.s / 2); x.lineTo(-p.s / 2, p.s / 2); x.closePath(); }
+        x.stroke(); x.restore();
+      });
+    }
+  },
+  flow: {
+    init() { P = Array.from({length: Math.round(260 * S.density / 100)}, () => ({x: rnd()*W, y: rnd()*H})); },
+    draw(dt) {
+      x.globalCompositeOperation = "destination-out"; x.fillStyle = "rgba(0,0,0,.06)"; x.fillRect(0, 0, W, H); x.globalCompositeOperation = "source-over";
+      x.fillStyle = "rgba(255,255,255,.85)";
+      P.forEach(p => {
+        const a = Math.sin(p.x * .004 + T * .3) * 3 + Math.cos(p.y * .004 - T * .2) * 3;
+        p.x += Math.cos(a) * 70 * dt; p.y += Math.sin(a) * 70 * dt;
+        if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) { p.x = rnd() * W; p.y = rnd() * H; }
+        x.fillRect(p.x, p.y, 2, 2);
+      });
+    }
+  },
+  rain: {
+    init() { P = Array.from({length: Math.round(120 * S.density / 100)}, () => ({x: rnd()*W, y: rnd()*H, l: 10 + rnd()*20, v: 400 + rnd()*400})); },
+    draw(dt) {
+      x.clearRect(0, 0, W, H); x.strokeStyle = "rgba(255,255,255,.4)"; x.lineWidth = 1.5; x.beginPath();
+      P.forEach(p => { p.y += p.v * dt; p.x -= p.v * dt * .15; if (p.y > H) { p.y = -20; p.x = rnd() * (W + 100); } x.moveTo(p.x, p.y); x.lineTo(p.x + p.l * .15, p.y - p.l); });
+      x.stroke();
+    }
+  },
+  snow: {
+    init() { P = Array.from({length: Math.round(120 * S.density / 100)}, () => ({x: rnd()*W, y: rnd()*H, r: 1 + rnd()*3, v: 20 + rnd()*40, ph: rnd()*6.28})); },
+    draw(dt) {
+      x.clearRect(0, 0, W, H); x.fillStyle = "rgba(255,255,255,.75)";
+      P.forEach(p => { p.y += p.v * dt; p.ph += dt; if (p.y > H + 5) { p.y = -5; p.x = rnd() * W; } x.beginPath(); x.arc(p.x + Math.sin(p.ph) * 14, p.y, p.r, 0, 6.283); x.fill(); });
+    }
+  },
+  light: {
+    init() {},
+    draw() {
+      x.clearRect(0, 0, W, H);
+      [[th.accent, 0], [ "#ffffff", 2.1]].forEach(([c, o]) => {
+        const cx = W * (.5 + .35 * Math.sin(T * .2 + o)), cy = H * (.45 + .3 * Math.cos(T * .17 + o)), r = Math.max(W, H) * .5 * (S.density / 100 * .5 + .5);
+        const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, rgba(c, .4)); g.addColorStop(1, rgba(c, 0));
+        x.fillStyle = g; x.fillRect(0, 0, W, H);
+      });
+    }
+  },
+  none: {init() {}, draw() {}}
+};
+function initFx() { W = cv.width = innerWidth; H = cv.height = innerHeight; x.clearRect(0, 0, W, H); FX[S.fx].init(); }
+let last = 0;
+function loop(ts) { requestAnimationFrame(loop); const dt = Math.min(.05, (ts - last) / 1000); last = ts; if (S.pause) return; T += dt * S.speed; FX[S.fx].draw(dt * S.speed); }
+addEventListener("resize", initFx);
+
+/* ---------- window manager ---------- */
+const wins = {}, tasks = $("tasks");
+let zTop = 10;
+function focusWin(w) {
+  w.el.classList.remove("hid"); w.el.style.zIndex = ++zTop;
+  Object.values(wins).forEach(o => o.task.classList.toggle("on", o === w));
+}
+function closeWin(id) { const w = wins[id]; if (!w) return; w.el.remove(); w.task.remove(); delete wins[id]; }
+function openWin(id, title, content, opts = {}) {
+  if (wins[id]) return focusWin(wins[id]);
+  const n = Object.keys(wins).length % 6, el = document.createElement("div"); el.className = "win";
+  const w = Math.min(opts.w || 720, innerWidth - 24), h = Math.min(opts.h || 480, innerHeight - 120);
+  Object.assign(el.style, {width: w + "px", height: h + "px", left: Math.max(8, Math.min(70 + n * 30, innerWidth - w - 8)) + "px", top: (50 + n * 30) + "px"});
+  const bar = document.createElement("div"); bar.className = "bar";
+  const ttl = document.createElement("span"); ttl.className = "ttl"; ttl.textContent = title; bar.appendChild(ttl);
+  const mk = (cls, label, fn) => { const b = document.createElement("button"); b.className = "wb " + cls; b.setAttribute("aria-label", label); b.title = label; b.textContent = {m: "\u2013", x: "\u25A1", c: "\u00D7", o: "\u2197"}[cls]; b.onclick = e => { e.stopPropagation(); fn(); }; bar.appendChild(b); };
+  const task = document.createElement("button"); task.className = "task"; task.textContent = title; tasks.appendChild(task);
+  const rec = {el, task}; wins[id] = rec;
+  if (opts.newTab) mk("o", "Open in new tab", () => window.open(opts.newTab, "_blank"));
+  mk("m", "Minimize", () => { el.classList.add("hid"); task.classList.remove("on"); });
+  mk("x", "Maximize", () => el.classList.toggle("max"));
+  mk("c", "Close", () => closeWin(id));
+  const body = document.createElement("div"); body.className = "wbody"; body.appendChild(content);
+  el.append(bar, body); document.body.appendChild(el);
+  if (innerWidth < 700) el.classList.add("max");
+  el.addEventListener("pointerdown", () => focusWin(rec));
+  bar.addEventListener("dblclick", () => el.classList.toggle("max"));
+  bar.addEventListener("pointerdown", e => {
+    if (e.target.closest("button") || el.classList.contains("max")) return;
+    const r = el.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+    bar.setPointerCapture(e.pointerId); document.body.classList.add("drag");
+    const mv = ev => { el.style.left = Math.max(-r.width + 80, Math.min(innerWidth - 80, ev.clientX - dx)) + "px"; el.style.top = Math.max(0, Math.min(innerHeight - 80, ev.clientY - dy)) + "px"; };
+    const up = () => { document.body.classList.remove("drag"); bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up); };
+    bar.addEventListener("pointermove", mv); bar.addEventListener("pointerup", up);
+  });
+  task.onclick = () => { if (el.classList.contains("hid")) focusWin(rec); else if (task.classList.contains("on")) { el.classList.add("hid"); task.classList.remove("on"); } else focusWin(rec); };
+  focusWin(rec);
+}
+function openGame(g) {
+  if (!S.windows) { window.open(g.path, "_blank"); return; }
+  const f = document.createElement("iframe"); f.src = g.path; f.title = g.name; f.allow = "fullscreen; autoplay; gamepad";
+  openWin("g:" + g.path, g.name, f, {newTab: g.path});
+}
+
+/* ---------- desktop icons + start menu ---------- */
+function tile(g, i, el) {
+  if (g.thumb) { const im = document.createElement("img"); im.src = g.thumb; im.alt = ""; el.appendChild(im); }
+  else { el.style.background = "var(--tile)"; el.style.color = "var(--accent)"; el.style.border = "1px solid rgba(255,255,255,.15)"; el.style.fontFamily = "ui-monospace,Consolas,monospace"; el.textContent = g.name.charAt(0).toUpperCase(); }
+}
+function renderDesk() {
+  const d = $("desk"); d.textContent = "";
+  const all = [...cur().map((g, i) => ({g, i})), {g: {name: "Settings"}, i: -1}];
+  all.forEach(({g, i}) => {
+    const b = document.createElement("button"); b.className = "ic";
+    const t = document.createElement("div"); t.className = "t";
+    if (i < 0) { t.style.background = "var(--tile)"; t.style.color = "var(--accent)"; t.style.border = "1px solid rgba(255,255,255,.15)"; t.style.fontFamily = "ui-monospace,Consolas,monospace"; t.textContent = "S"; } else tile(g, i, t);
+    const n = document.createElement("div"); n.className = "n"; n.textContent = g.name;
+    b.append(t, n); b.onclick = () => i < 0 ? openSettings() : openGame(g); d.appendChild(b);
+  });
+}
+const menu = $("menu"), q = $("q");
+function renderMenu() {
+  const f = q.value.trim().toLowerCase(), l = $("mlist"); l.textContent = "";
+  cur().forEach((g, i) => {
+    if (!g.name.toLowerCase().includes(f)) return;
+    const b = document.createElement("button"); b.className = "mi";
+    const ic = document.createElement("i"); ic.style.background = "var(--tile)"; ic.style.color = "var(--accent)"; ic.textContent = g.name.charAt(0).toUpperCase();
+    b.append(ic, g.name); b.onclick = () => { toggleMenu(false); openGame(g); }; l.appendChild(b);
+  });
+  if (!l.children.length) { const p = document.createElement("p"); p.textContent = "No games match that search."; p.style.margin = "8px"; l.appendChild(p); }
+}
+function toggleMenu(o) { menu.hidden = !o; $("start").setAttribute("aria-expanded", o); if (o) { q.value = ""; renderMenu(); q.focus(); } }
+$("start").onclick = e => { e.stopPropagation(); toggleMenu(menu.hidden); };
+q.addEventListener("input", renderMenu);
+addEventListener("pointerdown", e => { if (!menu.hidden && !menu.contains(e.target) && e.target !== $("start")) toggleMenu(false); });
+addEventListener("keydown", e => { if (e.key === "Escape") toggleMenu(false); });
+
+/* ---------- settings window ---------- */
+const sbox = document.createElement("div"); sbox.className = "pad";
+function buildControls() {
+  sbox.textContent = "";
+  CONTROLS.forEach(([k, label, type, a, b, step]) => {
+    const row = document.createElement("div"); row.className = "row" + (type === "check" ? " chk" : "");
+    const id = "s-" + k, lab = document.createElement("label"); lab.htmlFor = id; lab.textContent = label;
+    let inp, out;
+    if (type === "select") { inp = document.createElement("select"); a.forEach(([v, t]) => inp.add(new Option(t, v))); inp.value = S[k]; }
+    else { inp = document.createElement("input"); inp.type = type === "check" ? "checkbox" : "range"; if (type === "range") { inp.min = a; inp.max = b; inp.step = step; inp.value = S[k]; } else inp.checked = S[k]; }
+    inp.id = id;
+    if (type === "range") { out = document.createElement("span"); out.textContent = S[k]; const top = document.createElement("div"); top.className = "top"; top.append(lab, out); row.append(top, inp); }
+    else if (type === "check") row.append(inp, lab); else row.append(lab, inp);
+    inp.addEventListener("input", () => { S[k] = type === "check" ? inp.checked : type === "range" ? +inp.value : inp.value; if (out) out.textContent = S[k]; save(); apply(k); });
+    sbox.appendChild(row);
+  });
+  const r = document.createElement("button"); r.className = "btn"; r.textContent = "Reset to defaults";
+  r.onclick = () => { S = {...DEF}; save(); buildControls(); apply(); }; sbox.appendChild(r);
+}
+function openSettings() { openWin("settings", "Settings", sbox, {w: 380, h: 560}); }
+
+function apply(k) {
+  th = secret ? THEMES.secret : (THEMES[S.theme] || THEMES.teal);
+  const r = document.documentElement.style;
+  [["bg","bg"],["bg2","bg2"],["win","win"],["wtext","wtext"],["bar","bar"],["barText","barText"],["accent","accent"],["tile","tile"]].forEach(([a, b]) => r.setProperty("--" + a, th[b]));
+  r.setProperty("--accentText", ink(th.accent));
+  r.setProperty("--size", S.size + "px"); r.setProperty("--round", S.round + "px"); r.setProperty("--font", S.font);
+  cv.style.opacity = S.bright;
+  if (!k || ["fx", "theme", "density"].includes(k)) initFx();
+  renderDesk(); renderMenu();
+}
+function tick() { $("clock").textContent = new Date().toLocaleTimeString([], {hour: "numeric", minute: "2-digit"}); }
+
+/* reset any saved value that no longer exists */
+if (!FX[S.fx]) S.fx = DEF.fx;
+if (!THEMES[S.theme]) S.theme = DEF.theme;
+if (!FONTS.some(f => f[0] === S.font)) S.font = DEF.font;
+CONTROLS.forEach(([k, , type, a, b]) => { if (type === "range" && !(+S[k] >= a && +S[k] <= b)) S[k] = DEF[k]; });
+save();
+
+/* ---------- offline (automatic) ---------- */
+const setOff = t => { $("off").textContent = t; };
+async function autoOffline(list = GAMES) {
+  try {
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) await new Promise(r => { navigator.serviceWorker.addEventListener("controllerchange", r, {once: true}); setTimeout(r, 2000); });
+    const missing = [];
+    for (const g of list) if (!(await caches.match(new URL(g.path, location.href), {ignoreSearch: true}))) missing.push(g);
+    for (let i = 0; i < missing.length; i++) {
+      setOff("Saving offline " + (i + 1) + "/" + missing.length);
+      await new Promise(res => {
+        const f = document.createElement("iframe");
+        f.style.cssText = "position:fixed;width:2px;height:2px;left:-9999px;opacity:0;pointer-events:none"; f.setAttribute("aria-hidden", "true"); f.tabIndex = -1;
+        const done = () => setTimeout(() => { f.remove(); res(); }, 4000);
+        f.onload = done; f.onerror = done; f.src = missing[i].path; document.body.appendChild(f);
+        setTimeout(() => { f.remove(); res(); }, 20000);
+      });
+    }
+    if (missing.length) { setOff("Offline ready"); setTimeout(() => setOff(""), 5000); }
+  } catch (e) { setOff(""); }
+}
+if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("sw.js").then(() => setTimeout(autoOffline, 2500)).catch(() => {}));
+
+/* ---------- secret desktop (click the clock 5 times) ---------- */
+const pin = document.createElement("div"); pin.id = "pin"; pin.hidden = true;
+pin.innerHTML = '<div class="pbox" role="dialog" aria-label="Enter PIN"><p id="pmsg">Enter PIN</p><div class="dots" id="pdots"><i></i><i></i><i></i><i></i></div><div class="keys" id="pkeys"></div></div>';
+document.body.appendChild(pin);
+let buf = "", bad = 0, lockUntil = 0;
+const sha = async t => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, "0")).join("");
+function pdraw() { [...$("pdots").children].forEach((d, i) => d.classList.toggle("f", i < buf.length)); }
+function openPin() { buf = ""; $("pmsg").textContent = "Enter PIN"; pdraw(); pin.hidden = false; }
+function closePin() { pin.hidden = true; buf = ""; }
+async function pkey(k) {
+  if (k === "x") return closePin();
+  if (k === "b") { buf = buf.slice(0, -1); return pdraw(); }
+  if (buf.length >= 4) return;
+  buf += k; pdraw();
+  if (buf.length < 4) return;
+  if (Date.now() < lockUntil) { $("pmsg").textContent = "Too many tries. Wait a bit."; buf = ""; return pdraw(); }
+  if (!(window.crypto && crypto.subtle)) { $("pmsg").textContent = "PIN needs a secure (https) page."; buf = ""; return pdraw(); }
+  if (await sha("gs-secret|" + buf) === PIN_HASH) { bad = 0; closePin(); setSecret(true); }
+  else {
+    if (++bad >= 5) { bad = 0; lockUntil = Date.now() + 30000; }
+    $("pmsg").textContent = "Wrong PIN"; buf = ""; pdraw();
+    const b = pin.firstChild; b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
+  }
+}
+["1","2","3","4","5","6","7","8","9","x","0","b"].forEach(k => {
+  const b = document.createElement("button"); b.textContent = k === "x" ? "Cancel" : k === "b" ? "Del" : k; b.style.fontSize = k.length ? "" : ""; b.onclick = () => pkey(k); $("pkeys").appendChild(b);
+});
+addEventListener("keydown", e => { if (pin.hidden) return; if (/^\d$/.test(e.key)) pkey(e.key); else if (e.key === "Backspace") pkey("b"); else if (e.key === "Escape") closePin(); });
+function setSecret(on) {
+  secret = on; Object.keys(wins).forEach(closeWin); toggleMenu(false);
+  $("lock").hidden = !on; apply();
+  if (on) autoOffline(SECRET_GAMES);
+}
+$("lock").onclick = () => setSecret(false);
+let cc = 0, ct; $("clock").addEventListener("click", () => { cc++; clearTimeout(ct); ct = setTimeout(() => cc = 0, 1500); if (cc >= 5) { cc = 0; if (!secret) openPin(); } });
+
+buildControls(); apply(); tick(); setInterval(tick, 30000); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
