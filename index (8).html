@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Katastrophy.net</title>
+<style>
+  :root{--bg:#000;--panel:#1a1a1a;--line:#3a3a3a;--text:#d8d8d8;--muted:#888;--inp:#111;--hov:#262626;--thumb:#2a2a2a;--bar:#111;--btn:#222;--btnline:#555;--red:#c4161c;--red2:color-mix(in srgb,var(--red) 65%,#000);--card-w:180px}
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;min-height:100vh}
+  header{padding:32px 24px 16px;max-width:1000px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between;border-bottom:3px solid var(--red)}
+  h1{user-select:none;-webkit-user-select:none;cursor:default;font-size:1.6rem;font-weight:bold;color:var(--red);text-transform:uppercase;letter-spacing:.06em}
+  .sub{color:var(--muted);margin-top:4px;font-size:.85rem}
+  input[type=search]{background:var(--inp);border:1px solid var(--line);color:var(--text);padding:8px 10px;font-size:.95rem;width:min(260px,100%);outline:none}
+  input[type=search]:focus{border-color:var(--red)}
+  main{max-width:1000px;margin:0 auto;padding:20px 24px 48px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-w),1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);cursor:pointer;text-align:left;color:inherit;font:inherit;padding:0}
+  .card{border-top:3px solid var(--red2)}
+  .card:hover,.card:focus-visible{background:var(--hov);border-color:var(--red);outline:none}
+  .thumb{aspect-ratio:16/10;display:grid;place-items:center;font-size:2rem;color:var(--red);background:var(--thumb)}
+  .meta{padding:8px 10px 10px}
+  .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.95rem}
+  .file{color:var(--muted);font-size:.75rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .empty{border:1px solid var(--line);background:var(--panel);padding:20px;color:var(--muted);line-height:1.5}
+  .empty code{background:var(--thumb);color:var(--red2);padding:1px 4px}
+  .empty ol{margin:10px 0 0 20px}
+  #stage{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:10}
+  #stage.open{display:flex}
+  .bar{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bar);border-bottom:3px solid var(--red)}
+  .bar .title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem}
+  .bar button,.bar a{background:var(--btn);color:var(--text);border:1px solid var(--btnline);padding:5px 10px;font:inherit;font-size:.85rem;cursor:pointer;text-decoration:none}
+  .bar button:hover,.bar a:hover{background:var(--red);border-color:var(--red2);color:#fff}
+  .view{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:var(--stagebg,#000)}
+  .bar.low{flex-wrap:wrap;border-bottom:0;border-top:3px solid var(--red)}
+  .bar .grow{flex:1}
+  .bar label{color:var(--muted);font-size:.8rem;display:flex;align-items:center;gap:5px}
+  .bar select{background:var(--btn);color:var(--text);border:1px solid var(--btnline);padding:5px;font:inherit;font-size:.85rem}
+  #pin{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;place-items:center;z-index:30;padding:16px}
+  #pin.open{display:grid}
+  .pinpanel{width:min(300px,100%)}
+  #dots{text-align:center;font-size:1.6rem;letter-spacing:.4em;margin:6px 0 16px;color:var(--red);min-height:2rem}
+  #pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  #pad button{background:var(--inp);color:var(--text);border:1px solid var(--line);padding:14px 0;font:inherit;font-size:1.2rem;cursor:pointer}
+  #pad button:hover,#pad button:active{border-color:var(--red);color:var(--red)}
+  .pinpanel.bad{animation:shake .4s}
+  .pinpanel.bad #dots{color:#f33}
+  @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+  .tools{display:flex;gap:8px}
+  .gear{background:var(--inp);color:var(--text);border:1px solid var(--line);padding:0 12px;font-size:1.1rem;cursor:pointer}
+  .gear:hover{border-color:var(--red);color:var(--red)}
+  body.nofile .file{display:none}
+  #settings{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;z-index:20;padding:16px}
+  #settings.open{display:grid}
+  .panel{background:var(--panel);color:var(--text);border:1px solid var(--line);border-top:3px solid var(--red);width:min(420px,100%);max-height:90vh;overflow:auto;padding:18px}
+  .panel h2{font-size:1.1rem;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+  .panel h2 button{background:none;border:0;color:var(--muted);font-size:1.2rem;cursor:pointer}
+  .row{margin-bottom:14px}
+  .row label{display:block;color:var(--muted);font-size:.78rem;margin-bottom:5px}
+  .seg{display:flex;flex-wrap:wrap;gap:6px}
+  .seg button{background:var(--inp);color:var(--text);border:1px solid var(--line);padding:6px 11px;font:inherit;font-size:.85rem;cursor:pointer}
+  .seg button.on{background:var(--red);border-color:var(--red);color:#fff}
+  .sw{width:28px;height:28px;padding:0!important;border:2px solid var(--line)!important}
+  .sw.on{border-color:var(--text)!important}
+  input[type=color]{width:34px;height:28px;border:1px solid var(--line);background:none;padding:0;cursor:pointer}
+  .reset{background:none;border:1px solid var(--line);color:var(--muted);padding:6px 11px;font:inherit;font-size:.85rem;cursor:pointer}
+  .reset:hover{border-color:var(--red);color:var(--red)}
+  iframe{border:0;width:100%;height:100%;background:#fff;display:block}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="brand">Katastrophy.net</h1>
+    <p class="sub" id="count">Loading…</p>
+  </div>
+  <div class="tools"><input type="search" id="q" placeholder="Search…" aria-label="Search"><button class="gear" id="gear" aria-label="Settings" title="Settings">⚙</button></div>
+</header>
+
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden></div>
+</main>
+
+<div id="settings"><div class="panel" role="dialog" aria-label="Settings"><h2>Settings <button id="sx" aria-label="Close">✕</button></h2><div id="opts"></div><button class="reset" id="reset">Reset to defaults</button></div></div>
+
+<div id="pin"><div class="panel pinpanel" role="dialog" aria-label="Enter code"><h2>Enter code <button id="px" aria-label="Close">✕</button></h2><div id="dots"></div><div id="pad"></div></div></div>
+
+<div id="stage" role="dialog" aria-modal="true">
+  <div class="bar">
+    <span class="title" id="stageTitle"></span>
+    <button id="close">✕ Close</button>
+  </div>
+  <div class="view" id="view">
+  <iframe id="frame" allow="fullscreen; autoplay; clipboard-write" allowfullscreen
+    sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups allow-modals"></iframe>
+  </div>
+  <div class="bar low">
+    <label>Fit <select id="fit"><option value="fill">Fill</option><option value="16/9">16:9</option><option value="4/3">4:3</option><option value="1/1">Square</option></select></label>
+    <label>Backdrop <select id="sbg"><option value="black">Black</option><option value="grey">Grey</option><option value="white">White</option></select></label>
+    <span class="grow"></span>
+    <button id="rl">↻ Reload</button>
+    <button id="fs">⛶ Full screen</button>
+    <a id="pop" target="_blank" rel="noopener">Open in tab ↗</a>
+  </div>
+</div>
+
+<script>
+const REPO = 'katastrophy40/katastrophy40.github.io';
+const grid = document.getElementById('grid');
+const empty = document.getElementById('empty');
+const count = document.getElementById('count');
+const q = document.getElementById('q');
+const stage = document.getElementById('stage');
+const frame = document.getElementById('frame');
+let items = [];
+const errors = [];
+
+const SKIP = /^(index|404)\.html?$/i;
+const isPage = p => /\.html?$/i.test(p) && !SKIP.test(p) && !/(^|\/)(\.|node_modules\/)/.test(p) && !/(^|\/)dev\.html?$/i.test(p);
+const pretty = f => f.replace(/\.html?$/i,'').replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim()
+  .replace(/\b\w/g, c => c.toUpperCase());
+const enc = p => p.split('/').map(encodeURIComponent).join('/');
+function hue(s){ let h=0; for (const c of s) h=(h*31+c.charCodeAt(0))>>>0; return h%360; }
+
+// A) Ask GitHub for every file in the repo (one request, finds pages anywhere, in folders or not)
+async function fromTree(){
+  const r = await fetch(`https://api.github.com/repos/${REPO}/git/trees/HEAD?recursive=1`);
+  if(!r.ok) throw new Error('GitHub API ' + r.status);
+  const data = await r.json();
+  return data.tree.filter(x => x.type === 'blob' && isPage(x.path)).map(x => x.path);
+}
+
+// B) A hand-made list.json (array of paths) in the site root or in play/
+async function fromManifest(){
+  for (const u of ['list.json','play/list.json']) {
+    const r = await fetch(u, {cache:'no-store'});
+    if(!r.ok) continue;
+    const data = await r.json();
+    const base = u.startsWith('play/') ? 'play/' : '';
+    return data.map(x => typeof x === 'string' ? x : x.file).filter(Boolean).map(f => base + f);
+  }
+  throw new Error('no list.json');
+}
+
+// C) Plain folder listing (local servers like python -m http.server)
+async function fromListing(){
+  const out = [];
+  for (const dir of ['', 'play/']) {
+    const r = await fetch('./' + dir, {cache:'no-store'});
+    if(!r.ok) continue;
+    const doc = new DOMParser().parseFromString(await r.text(), 'text/html');
+    for (const a of doc.querySelectorAll('a')) {
+      const f = decodeURIComponent((a.getAttribute('href')||'').split(/[?#]/)[0]).split('/').pop();
+      if (isPage(f)) out.push(dir + f);
+    }
+  }
+  if(!out.length) throw new Error('no listing');
+  return out;
+}
+
+async function load(){
+  let files = [];
+  for (const src of [fromTree, fromManifest, fromListing]) {
+    try { files = await src(); if (files.length) break; }
+    catch(e){ errors.push(src.name + ': ' + (e.message || e)); }
+  }
+  items = [...new Set(files)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}))
+    .map(p => ({file:p, name:pretty(p.split('/').pop())}));
+  render();
+}
+
+function render(){
+  const term = q.value.trim().toLowerCase();
+  const shown = items.filter(i => i.name.toLowerCase().includes(term));
+  if (S.sort === 'za') shown.reverse();
+  grid.innerHTML = '';
+  count.textContent = items.length ? `${shown.length} of ${items.length} ready` : 'Nothing here yet';
+
+  if(!items.length){
+    empty.hidden = false;
+    empty.innerHTML = `<strong style="color:var(--text)">No pages found.</strong>
+      <ol>
+        <li>Upload <code>.html</code> files to the repo (any folder, or the root).</li>
+        <li>Hard refresh with <code>Ctrl+Shift+R</code> — a cached old copy of this page can hide new files.</li>
+        <li>Optional: add a <code>list.json</code> like <code>["play/one.html","two.html"]</code>.</li>
+      </ol>
+      <p style="margin-top:14px;font-size:.85rem">Details: ${errors.join(' · ') || 'search returned nothing'}</p>`;
+    return;
+  }
+  empty.hidden = true;
+
+  for(const it of shown){
+    const h = hue(it.file);
+    const b = document.createElement('button');
+    b.className = 'card';
+    b.innerHTML = `<div class="thumb"></div>
+      <div class="meta"><div class="name"></div><div class="file"></div></div>`;
+    b.querySelector('.thumb').textContent = it.name.charAt(0);
+    b.querySelector('.name').textContent = it.name;
+    b.querySelector('.file').textContent = it.file;
+    b.onclick = () => open(it);
+    grid.appendChild(b);
+  }
+}
+
+function open(it){
+  const url = enc(it.file);
+  if (S.open === 'tab') { window.open(url, '_blank', 'noopener'); return; }
+  document.getElementById('stageTitle').textContent = it.name;
+  document.getElementById('pop').href = url;
+  frame.src = url;
+  stage.classList.add('open');
+  syncLow(); fit();
+  document.body.style.overflow = 'hidden';
+  setTimeout(()=>frame.focus(), 50);
+}
+function closeStage(){
+  stage.classList.remove('open');
+  frame.src = 'about:blank';
+  document.body.style.overflow = '';
+}
+
+document.getElementById('close').onclick = closeStage;
+document.getElementById('fs').onclick = () => (frame.requestFullscreen||frame.webkitRequestFullscreen).call(frame);
+addEventListener('keydown', e => { if(e.key==='Escape' && stage.classList.contains('open') && !document.fullscreenElement) closeStage(); });
+q.addEventListener('input', render);
+
+// ---- settings (saved in this browser) ----
+const DEFAULTS = {accent:'#c4161c', theme:'black', size:'m', files:true, sort:'az', open:'overlay', fit:'fill', sbg:'black'};
+const THEMES = {
+  black:{'--bg':'#000','--panel':'#1a1a1a','--line':'#3a3a3a','--text':'#d8d8d8','--muted':'#888','--inp':'#111','--hov':'#262626','--thumb':'#2a2a2a','--bar':'#111','--btn':'#222','--btnline':'#555'},
+  dark:{'--bg':'#1e1e1e','--panel':'#2b2b2b','--line':'#454545','--text':'#e2e2e2','--muted':'#999','--inp':'#232323','--hov':'#353535','--thumb':'#3a3a3a','--bar':'#252525','--btn':'#333','--btnline':'#666'},
+  grey:{'--bg':'#e4e4e4','--panel':'#f2f2f2','--line':'#bdbdbd','--text':'#333','--muted':'#777','--inp':'#fff','--hov':'#fff','--thumb':'#d0d0d0','--bar':'#d0d0d0','--btn':'#f2f2f2','--btnline':'#999'}
+};
+const SIZES = {s:'140px', m:'180px', l:'250px'};
+const ACCENTS = ['#c4161c','#e8590c','#d4a017','#2f9e44','#1c7ed6','#9c36b5','#777777'];
+const OPTS = [
+  {key:'theme', label:'Background', choices:[['black','Black'],['dark','Dark grey'],['grey','Light grey']]},
+  {key:'size',  label:'Card size',  choices:[['s','Small'],['m','Medium'],['l','Large']]},
+  {key:'sort',  label:'Sort',       choices:[['az','A–Z'],['za','Z–A']]},
+  {key:'open',  label:'Open in',    choices:[['overlay','Overlay'],['tab','New tab']]},
+  {key:'files', label:'Show file paths', choices:[[true,'On'],[false,'Off']]}
+];
+
+let S = {...DEFAULTS};
+try { S = {...DEFAULTS, ...JSON.parse(localStorage.getItem('prefs') || '{}')}; } catch {}
+// Chromebooks: pages run in their own tab by default (the overlay shares one process with this site)
+try {
+  const saved = JSON.parse(localStorage.getItem('prefs') || '{}');
+  if (/CrOS/.test(navigator.userAgent) && !('open' in saved)) S.open = 'tab';
+} catch {}
+const save = () => { try { localStorage.setItem('prefs', JSON.stringify(S)); } catch {} };
+
+function apply(){
+  const root = document.documentElement.style;
+  for (const [k,v] of Object.entries(THEMES[S.theme] || THEMES.black)) root.setProperty(k, v);
+  root.setProperty('--red', S.accent);
+  root.setProperty('--card-w', SIZES[S.size] || SIZES.m);
+  root.setProperty('--stagebg', {black:'#000', grey:'#2a2a2a', white:'#fff'}[S.sbg] || '#000');
+  document.body.classList.toggle('nofile', !S.files);
+  syncLow(); fit();
+}
+
+function buildSettings(){
+  const box = document.getElementById('opts');
+  box.innerHTML = '';
+  const accRow = document.createElement('div');
+  accRow.className = 'row';
+  accRow.innerHTML = '<label>Accent color</label><div class="seg" id="acc"></div>';
+  box.appendChild(accRow);
+  const acc = accRow.querySelector('#acc');
+  for (const c of ACCENTS) {
+    const b = document.createElement('button');
+    b.className = 'sw' + (S.accent === c ? ' on' : '');
+    b.style.background = c;
+    b.setAttribute('aria-label', c);
+    b.onclick = () => { S.accent = c; save(); apply(); buildSettings(); };
+    acc.appendChild(b);
+  }
+  const pick = document.createElement('input');
+  pick.type = 'color'; pick.value = /^#[0-9a-f]{6}$/i.test(S.accent) ? S.accent : '#c4161c';
+  pick.title = 'Custom color';
+  pick.oninput = () => { S.accent = pick.value; save(); apply(); };
+  pick.onchange = buildSettings;
+  acc.appendChild(pick);
+
+  for (const o of OPTS) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<label>${o.label}</label><div class="seg"></div>`;
+    const seg = row.querySelector('.seg');
+    for (const [val, text] of o.choices) {
+      const b = document.createElement('button');
+      b.textContent = text;
+      if (String(S[o.key]) === String(val)) b.className = 'on';
+      b.onclick = () => { S[o.key] = val; save(); apply(); buildSettings(); render(); };
+      seg.appendChild(b);
+    }
+    box.appendChild(row);
+  }
+}
+
+const settingsEl = document.getElementById('settings');
+const toggleSettings = on => { settingsEl.classList.toggle('open', on); if (on) buildSettings(); };
+document.getElementById('gear').onclick = () => toggleSettings(true);
+document.getElementById('sx').onclick = () => toggleSettings(false);
+settingsEl.addEventListener('click', e => { if (e.target === settingsEl) toggleSettings(false); });
+document.getElementById('reset').onclick = () => { S = {...DEFAULTS}; save(); apply(); buildSettings(); render(); };
+addEventListener('keydown', e => { if (e.key === 'Escape') toggleSettings(false); });
+
+// ---- controls under the open page ----
+function syncLow(){
+  document.getElementById('fit').value = S.fit;
+  document.getElementById('sbg').value = S.sbg;
+}
+function fit(){
+  if (S.fit === 'fill') { frame.style.width = '100%'; frame.style.height = '100%'; return; }
+  const v = document.getElementById('view');
+  const [a,b] = S.fit.split('/').map(Number), r = a / b;
+  const w = Math.min(v.clientWidth, v.clientHeight * r);
+  frame.style.width = w + 'px';
+  frame.style.height = (w / r) + 'px';
+}
+document.getElementById('fit').onchange = e => { S.fit = e.target.value; save(); fit(); };
+document.getElementById('sbg').onchange = e => { S.sbg = e.target.value; save(); apply(); };
+document.getElementById('rl').onclick = () => { const u = frame.src; frame.src = 'about:blank'; setTimeout(() => frame.src = u, 30); };
+addEventListener('resize', fit);
+
+// ---- hidden entry: click the title 3 times ----
+const PIN = '8692';
+const pinEl = document.getElementById('pin');
+const dots = document.getElementById('dots');
+const pinPanel = pinEl.querySelector('.pinpanel');
+let entry = '';
+function drawPin(){ dots.textContent = '●'.repeat(entry.length) + '○'.repeat(4 - entry.length); }
+function openPin(on){ pinEl.classList.toggle('open', on); entry = ''; drawPin(); }
+async function goDev(){
+  for (const p of ['play/dev.html', 'playables/dev.html']) {
+    try { const r = await fetch(p, {method:'HEAD', cache:'no-store'}); if (r.ok) { location.href = p; return; } } catch {}
+  }
+  location.href = 'play/dev.html';
+}
+function press(d){
+  if (entry.length >= 4) return;
+  entry += d; drawPin();
+  if (entry.length < 4) return;
+  if (entry === PIN) { openPin(false); goDev(); return; }
+  pinPanel.classList.add('bad');
+  setTimeout(() => { pinPanel.classList.remove('bad'); entry = ''; drawPin(); }, 450);
+}
+const pad = document.getElementById('pad');
+for (const k of ['1','2','3','4','5','6','7','8','9','C','0','⌫']) {
+  const b = document.createElement('button');
+  b.textContent = k;
+  b.onclick = () => k === 'C' ? (entry = '', drawPin()) : k === '⌫' ? (entry = entry.slice(0,-1), drawPin()) : press(k);
+  pad.appendChild(b);
+}
+document.getElementById('px').onclick = () => openPin(false);
+pinEl.addEventListener('click', e => { if (e.target === pinEl) openPin(false); });
+addEventListener('keydown', e => {
+  if (!pinEl.classList.contains('open')) return;
+  if (/^[0-9]$/.test(e.key)) press(e.key);
+  else if (e.key === 'Backspace') { entry = entry.slice(0,-1); drawPin(); }
+  else if (e.key === 'Escape') openPin(false);
+});
+let taps = 0, tapTimer;
+document.getElementById('brand').addEventListener('click', () => {
+  taps++; clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => taps = 0, 900);
+  if (taps >= 3) { taps = 0; openPin(true); }
+});
+
+apply();
+
+load();
+</script>
+</body>
+</html>
